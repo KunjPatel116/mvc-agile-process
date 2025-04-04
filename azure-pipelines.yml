@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: Default  # Your self-hosted agent pool
+  name: Default  # Your self-hosted agent
 
 variables:
   buildConfiguration: 'Release'
@@ -71,8 +71,12 @@ stages:
                     Expand-Archive -Path $zipPath -DestinationPath $unzipPath -Force
 
               - task: PowerShell@2
-                displayName: 'Run the ASP.NET Core MVC app'
+                displayName: 'Run the ASP.NET Core MVC app (15 sec preview)'
                 inputs:
                   targetType: 'inline'
                   script: |
-                    dotnet '$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll'
+                    Write-Host "Launching app for 15 seconds..."
+                    $process = Start-Process "dotnet" -ArgumentList "'$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll'" -PassThru -NoNewWindow
+                    Start-Sleep -Seconds 15
+                    Write-Host "Stopping app after 15 seconds..."
+                    Stop-Process -Id $process.Id -Force
