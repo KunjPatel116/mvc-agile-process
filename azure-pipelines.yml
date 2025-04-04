@@ -14,13 +14,29 @@ variables:
   dotNetVersion: '8.0.x'
 
 steps:
+- checkout: self
+  clean: true
+
 - task: UseDotNet@2
   displayName: 'Install .NET 8'
   inputs:
     version: $(dotNetVersion)
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build & Publish'
+  displayName: 'Restore Packages'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build Solution'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Web App'
   inputs:
     command: 'publish'
     publishWebProjects: true
