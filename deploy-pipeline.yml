@@ -3,7 +3,7 @@ name: $(Build.BuildId)
 resources:
   pipelines:
     - pipeline: mvc_ci
-      source: 'KunjPatel116.mvc-agile-process'  # Will match after CI pipeline creation
+      source: 'KunjPatel116.mvc-agile-process'  # Must match CI pipeline name exactly
       trigger:
         branches:
           include:
@@ -11,21 +11,30 @@ resources:
 
 stages:
 - stage: Deploy
+  displayName: 'Deploy to Production'
   jobs:
   - deployment: DeployToIIS
-    environment: Production
+    displayName: 'Deploy ASP.NET Core to IIS'
+    environment: 'Production'
+    pool:
+      name: MyCustomPool
+      demands:
+        - Agent.OS -equals Windows_NT
     strategy:
       runOnce:
         deploy:
           steps:
           - checkout: none
-          
+
           - download: current
-            artifact: 'webapp'
-          
+            artifact: 'webapp'  # Must match CI artifact name
+
           - task: IISWebAppDeploymentOnMachineGroup@0
+            displayName: 'Deploy to IIS'
             inputs:
               WebSiteName: 'Default Web Site'
               VirtualApplication: 'MVCAgileApp'
               Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
               TakeAppOfflineFlag: true
+              RemoveAdditionalFilesFlag: true
+              XmlVariableSubstitution: true

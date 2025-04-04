@@ -6,12 +6,14 @@ trigger:
       - main
       - sprint2
 
-pool:
-  vmImage: 'windows-latest'
-
 variables:
   buildConfiguration: 'Release'
   dotNetVersion: '8.0.x'
+
+pool:
+  name: MyCustomPool
+  demands:
+    - Agent.OS -equals Windows_NT
 
 steps:
 - task: UseDotNet@2
@@ -20,20 +22,20 @@ steps:
     version: $(dotNetVersion)
 
 - task: DotNetCoreCLI@2
-  displayName: 'Restore'
+  displayName: 'Restore Packages'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build'
+  displayName: 'Build Solution'
   inputs:
     command: 'build'
     projects: '**/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Publish'
+  displayName: 'Publish Web App'
   inputs:
     command: 'publish'
     publishWebProjects: true
@@ -44,3 +46,4 @@ steps:
   inputs:
     targetPath: '$(Build.ArtifactStagingDirectory)'
     artifact: 'webapp'
+    publishLocation: 'pipeline'
