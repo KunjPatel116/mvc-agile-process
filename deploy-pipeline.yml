@@ -3,38 +3,45 @@ name: $(Build.BuildId)
 resources:
   pipelines:
     - pipeline: mvc_ci
-      source: 'KunjPatel116.mvc-agile-process'  # Must match CI pipeline name exactly
+      source: 'KunjPatel116.mvc-agile-process'
       trigger:
         branches:
           include:
             - main
 
+pool:
+  vmImage: 'windows-latest'  # Microsoft-hosted agent
+
 stages:
 - stage: Deploy
-  displayName: 'Deploy to Production'
   jobs:
-  - deployment: DeployToIIS
-    displayName: 'Deploy ASP.NET Core to IIS'
-    environment: 'Production'
-    pool:
-      name: MyCustomPool
-      demands:
-        - Agent.OS -equals Windows_NT
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - checkout: none
-
-          - download: current
-            artifact: 'webapp'  # Must match CI artifact name
-
-          - task: IISWebAppDeploymentOnMachineGroup@0
-            displayName: 'Deploy to IIS'
-            inputs:
-              WebSiteName: 'Default Web Site'
-              VirtualApplication: 'MVCAgileApp'
-              Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
-              TakeAppOfflineFlag: true
-              RemoveAdditionalFilesFlag: true
-              XmlVariableSubstitution: true
+  - job: Deploy
+    steps:
+    - download: current
+      artifact: 'webapp'
+    
+    # Zip deployment package (required for IIS task)
+    - task: ArchiveFiles@2
+      displayName: 'Create Deployment Package'
+      inputs:
+        rootFolderOrFile: '$(Pipeline.Workspace)/webapp'
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/package.zip'
+    
+    # Download to local machine (manual deployment)
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download Package'
+      inputs:
+        artifact: 'package'
+        path: '$(System.ArtifactsDirectory)'
+    
+    # Manual deployment instructions
+    - script: |
+        echo "##vso[task.complete result=SucceededWithIssues;]"
+        echo "#############################################"
+        echo "#   MANUAL DEPLOYMENT REQUIRED              #"
+        echo "# 1. Download package.zip from artifacts    #"
+        echo "# 2. Extract to C:\inetpub\MVCAgileApp      #"
+        echo "# 3. Configure IIS as per documentation     #"
+        echo "#############################################"
+      displayName: 'Manual Deployment Instructions'
