@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: Default  # Uses your self-hosted agent
+  name: Default  # Your self-hosted agent pool
 
 variables:
   buildConfiguration: 'Release'
@@ -75,5 +75,5 @@ stages:
                 inputs:
                   targetType: 'inline'
                   script: |
-                    $env:ConnectionStrings__MvcMovieContext = "Server=(localdb)\mssqllocaldb;Database=MvcMovieDB;Trusted_Connection=True;MultipleActiveResultSets=true"
+                    $env:ConnectionStrings__MvcMovieContext = "Server=localhost;Database=MvcMovieDB;User Id=mvcuser;Password=Abcd@1234;"
                     dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
