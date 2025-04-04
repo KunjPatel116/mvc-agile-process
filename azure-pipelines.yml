@@ -76,7 +76,12 @@ stages:
                   targetType: 'inline'
                   script: |
                     Write-Host "Launching app for 15 seconds..."
-                    $process = Start-Process "dotnet" -ArgumentList "'$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll'" -PassThru -NoNewWindow
+                    $appPath = "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
+                    $process = Start-Process "dotnet" -ArgumentList $appPath -PassThru -NoNewWindow
                     Start-Sleep -Seconds 15
+                    if ($process -and !$process.HasExited) {
                     Write-Host "Stopping app after 15 seconds..."
                     Stop-Process -Id $process.Id -Force
+                    } else {
+                    Write-Host "App already exited or failed to start."
+                    }
