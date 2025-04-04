@@ -3,30 +3,37 @@ name: $(Build.BuildId)
 # Trigger when CI pipeline completes
 resources:
   pipelines:
-  - source: Your_CI_Pipeline_Name  # 👈 Change this to match your CI pipeline name
-    trigger: true
+    - pipeline: MVC-Movie-CI  # 👈 This must match your CI pipeline name exactly
+      source: 'MVC-Movie-CI'   # Your CI pipeline name in quotes
+      trigger: 
+        enabled: true
+        branches:
+          include:
+            - main  # Trigger when CI completes on main branch
 
 stages:
-- stage: Deploy
-  jobs:
-  - deployment: DeployToIIS
-    environment: Production  # Will create this in Azure DevOps
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - checkout: none  # Skip code checkout (we only need artifacts)
-            
-          # Download build artifacts from CI
-          - download: current
-            artifact: webapp
-            
-          # Deploy to IIS
-          - task: IISWebAppDeploymentOnMachineGroup@0
-            displayName: 'Deploy to IIS'
-            inputs:
-              WebSiteName: 'Default Web Site'
-              VirtualApplication: 'MVCAgileApp'
-              Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
-              TakeAppOfflineFlag: true
-              RemoveAdditionalFilesFlag: true
+  - stage: Deploy
+    displayName: 'Deploy to Production'
+    jobs:
+      - deployment: DeployToIIS
+        displayName: 'Deploy to IIS'
+        environment: 'Production'  # Must match your environment name
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: none  # No code needed, we use artifacts
+                
+                # Download build artifacts from CI pipeline
+                - download: current
+                  artifact: 'webapp'
+                
+                # Deploy to IIS
+                - task: IISWebAppDeploymentOnMachineGroup@0
+                  displayName: 'Deploy MVC Application'
+                  inputs:
+                    WebSiteName: 'Default Web Site'
+                    VirtualApplication: 'MVCAgileApp'
+                    Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
+                    TakeAppOfflineFlag: true
+                    RemoveAdditionalFilesFlag: true
