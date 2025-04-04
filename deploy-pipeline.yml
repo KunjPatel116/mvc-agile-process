@@ -1,32 +1,26 @@
-name: $(Build.BuildId)
+trigger:
+  branches:
+    include:
+      - main
+      - sprint2
 
-resources:
-  pipelines:
-    - pipeline: mvc_ci  # Internal reference name (can be anything)
-      source: 'KunjPatel116.mvc-agile-process'  # Must match EXACTLY
-      project: 'MVC Agile Process'  # Add project name
-      trigger:
-        branches:
-          include:
-            - main
-            - sprint2
+pool:
+  vmImage: 'windows-latest'
 
 stages:
   - stage: Deploy
     jobs:
-      - deployment: DeployToIIS
-        environment: Production
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: none
-                
-                - download: current
-                  artifact: drop
-                
-                - task: IISWebAppDeploymentOnMachineGroup@0
-                  inputs:
-                    WebSiteName: 'Default Web Site'
-                    VirtualApplication: 'MVCAgileApp'
-                    Package: '$(Pipeline.Workspace)/drop/**/*.zip'
+      - job: Deploy
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+              
+          - task: IISWebAppDeploymentOnMachineGroup@0
+            inputs:
+              WebSiteName: 'Default Web Site'
+              VirtualApplication: 'MVCAgileApp'
+              Package: '$(System.ArtifactsDirectory)/drop/**/*.zip'
