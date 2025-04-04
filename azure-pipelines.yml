@@ -71,4 +71,6 @@ stages:
                 inputs:
                   targetType: 'inline'
                   script: |
+                    # Set connection string environment variable for the app
+                    $env:ConnectionStrings__MvcMovieContext = "Server=(localdb)\mssqllocaldb;Database=MvcMovieDB;Trusted_Connection=True;MultipleActiveResultSets=true"
                     dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
