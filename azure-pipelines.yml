@@ -71,9 +71,10 @@ stages:
                     Expand-Archive -Path $zipPath -DestinationPath $unzipPath -Force
 
               - task: PowerShell@2
-                displayName: 'Run the ASP.NET Core MVC app'
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    $env:ConnectionStrings__MvcMovieContext = 'Server=localhost\SQLEXPRESS;Database=MvcMovieDB;User Id=mvcuser;Password=Abcd@1234;Encrypt=False;TrustServerCertificate=True;'
-                    dotnet '$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll'
+  displayName: 'Run the ASP.NET Core MVC app'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $env:ConnectionStrings__MvcMovieContext = 'Server=RAVAN\SQLEXPRESS;Database=MvcMovieDB;User Id=mvcuser;Password=Abcd@1234;Encrypt=False;TrustServerCertificate=True;'
+      dotnet '$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll'
+
