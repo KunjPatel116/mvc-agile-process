@@ -2,20 +2,20 @@ name: $(Build.BuildId)
 
 resources:
   pipelines:
-    - pipeline: mvc_movie_ci  # Internal reference (can be any name)
-      source: 'KunjPatel116.mvc-agile-process'  # MUST match exact pipeline name
-      trigger: 
+    - pipeline: mvc_ci  # Internal reference name (can be anything)
+      source: 'KunjPatel116.mvc-agile-process'  # Must match EXACTLY
+      project: 'MVC Agile Process'  # Add project name
+      trigger:
         branches:
           include:
-            - main  # Trigger when CI completes on main branch
+            - main
+            - sprint2
 
 stages:
   - stage: Deploy
-    displayName: 'Deploy to Production'
     jobs:
       - deployment: DeployToIIS
-        displayName: 'Deploy to IIS'
-        environment: 'Production'
+        environment: Production
         strategy:
           runOnce:
             deploy:
@@ -23,13 +23,10 @@ stages:
                 - checkout: none
                 
                 - download: current
-                  artifact: drop  # Default artifact name
+                  artifact: drop
                 
                 - task: IISWebAppDeploymentOnMachineGroup@0
-                  displayName: 'Deploy MVC Application'
                   inputs:
                     WebSiteName: 'Default Web Site'
                     VirtualApplication: 'MVCAgileApp'
                     Package: '$(Pipeline.Workspace)/drop/**/*.zip'
-                    TakeAppOfflineFlag: true
-                    RemoveAdditionalFilesFlag: true
