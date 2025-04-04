@@ -75,5 +75,5 @@ stages:
                 inputs:
                   targetType: 'inline'
                   script: |
-                    $env:ConnectionStrings__MvcMovieContext = "Server=localhost;Database=MvcMovieDB;User Id=mvcuser;Password=Abcd@1234;Encrypt=False;TrustServerCertificate=True;"
+                    $env:ConnectionStrings__MvcMovieContext = "Server=localhost\\SQLEXPRESS;Database=MvcMovieDB;User Id=mvcuser;Password=Abcd@1234;Encrypt=False;TrustServerCertificate=True;""
                     dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
