@@ -57,20 +57,24 @@ stages:
           deploy:
             steps:
               - download: current
-                artifact: drop
+  artifact: drop
 
-              - task: PowerShell@2
-                displayName: 'Unzip published artifact'
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    Expand-Archive -Path "$(Pipeline.Workspace)/drop/MvcMovie.zip" -DestinationPath "$(Pipeline.Workspace)/drop/unzipped"
+- task: PowerShell@2
+  displayName: 'Unzip published artifact'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $zipPath = "$(Pipeline.Workspace)/drop/MvcMovie.zip"
+      $unzipPath = "$(Pipeline.Workspace)/drop/unzipped"
+      if (Test-Path $unzipPath) {
+        Remove-Item $unzipPath -Recurse -Force
+      }
+      Expand-Archive -Path $zipPath -DestinationPath $unzipPath -Force
 
-              - task: PowerShell@2
-                displayName: 'Run the ASP.NET Core MVC app'
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    # Set connection string environment variable for the app
-                    $env:ConnectionStrings__MvcMovieContext = "Server=(localdb)\mssqllocaldb;Database=MvcMovieDB;Trusted_Connection=True;MultipleActiveResultSets=true"
-                    dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
+- task: PowerShell@2
+  displayName: 'Run the ASP.NET Core MVC app'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $env:ConnectionStrings__MvcMovieContext = "Server=(localdb)\mssqllocaldb;Database=MvcMovieDB;Trusted_Connection=True;MultipleActiveResultSets=true"
+      dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
