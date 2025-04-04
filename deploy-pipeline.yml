@@ -1,0 +1,32 @@
+name: $(Build.BuildId)
+
+# Trigger when CI pipeline completes
+resources:
+  pipelines:
+  - source: Your_CI_Pipeline_Name  # 👈 Change this to match your CI pipeline name
+    trigger: true
+
+stages:
+- stage: Deploy
+  jobs:
+  - deployment: DeployToIIS
+    environment: Production  # Will create this in Azure DevOps
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none  # Skip code checkout (we only need artifacts)
+            
+          # Download build artifacts from CI
+          - download: current
+            artifact: webapp
+            
+          # Deploy to IIS
+          - task: IISWebAppDeploymentOnMachineGroup@0
+            displayName: 'Deploy to IIS'
+            inputs:
+              WebSiteName: 'Default Web Site'
+              VirtualApplication: 'MVCAgileApp'
+              Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
+              TakeAppOfflineFlag: true
+              RemoveAdditionalFilesFlag: true
