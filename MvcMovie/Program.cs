@@ -5,17 +5,22 @@ using MvcMovie.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ Switch from SQL Server to SQLite
 builder.Services.AddDbContext<MvcMovieContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MvcMovieContext") ?? throw new InvalidOperationException("Connection string 'MvcMovieContext' not found.")));
+    options.UseSqlite("Data Source=MvcMovie.db"));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// ✅ Apply migrations and seed the database
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<MvcMovieContext>();
+    context.Database.Migrate(); // Ensure DB + schema created
 
     SeedData.Initialize(services);
 }
@@ -24,14 +29,11 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
-// Add this line to serve static files like CSS, JavaScript, and images.
-app.UseStaticFiles();  // <-- This is important for serving your CSS
+app.UseStaticFiles();  // Important for CSS/JS
 
 app.UseRouting();
 
