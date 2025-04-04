@@ -1,0 +1,33 @@
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+      - main
+      - sprint2
+
+pool:
+  vmImage: 'windows-latest'  # Microsoft-hosted Windows agent
+
+variables:
+  buildConfiguration: 'Release'
+  dotNetVersion: '8.0.x'
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Install .NET 8'
+  inputs:
+    version: $(dotNetVersion)
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build & Publish'
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Artifact'
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)'
+    artifact: 'webapp'
