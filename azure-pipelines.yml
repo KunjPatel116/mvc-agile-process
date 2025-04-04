@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: Default  # Self-hosted agent
+  name: Default  # Uses your self-hosted agent
 
 variables:
   buildConfiguration: 'Release'
@@ -15,25 +15,26 @@ stages:
     - job: BuildJob
       steps:
         - task: UseDotNet@2
+          displayName: 'Install .NET SDK'
           inputs:
             packageType: 'sdk'
             version: '8.0.x'
 
         - task: DotNetCoreCLI@2
-          displayName: Restore packages
+          displayName: 'Restore packages'
           inputs:
             command: 'restore'
             projects: '**/*.csproj'
 
         - task: DotNetCoreCLI@2
-          displayName: Build solution
+          displayName: 'Build solution'
           inputs:
             command: 'build'
             projects: '**/*.csproj'
             arguments: '--configuration $(buildConfiguration)'
 
         - task: DotNetCoreCLI@2
-          displayName: Publish
+          displayName: 'Publish app'
           inputs:
             command: 'publish'
             publishWebProjects: true
@@ -41,6 +42,7 @@ stages:
             zipAfterPublish: true
 
         - task: PublishBuildArtifacts@1
+          displayName: 'Publish artifact'
           inputs:
             pathToPublish: '$(Build.ArtifactStagingDirectory)'
             artifactName: 'drop'
@@ -58,9 +60,15 @@ stages:
                 artifact: drop
 
               - task: PowerShell@2
-                displayName: Run published app
+                displayName: 'Unzip published artifact'
                 inputs:
                   targetType: 'inline'
                   script: |
-                    Write-Host "Launching the application..."
-                    dotnet "$(Pipeline.Workspace)/drop/YourApp.dll"
+                    Expand-Archive -Path "$(Pipeline.Workspace)/drop/MvcMovie.zip" -DestinationPath "$(Pipeline.Workspace)/drop/unzipped"
+
+              - task: PowerShell@2
+                displayName: 'Run the ASP.NET Core MVC app'
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    dotnet "$(Pipeline.Workspace)/drop/unzipped/MvcMovie.dll"
