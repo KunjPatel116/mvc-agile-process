@@ -1,49 +1,66 @@
-name: $(Build.BuildId)
-
 trigger:
   branches:
     include:
       - main
-      - sprint2
 
 pool:
-  vmImage: 'windows-latest'  # Microsoft-hosted Windows agent
+  name: Default  # Self-hosted agent
 
 variables:
   buildConfiguration: 'Release'
-  dotNetVersion: '8.0.x'
 
-steps:
-- checkout: self
-  clean: true
+stages:
+- stage: Build
+  jobs:
+    - job: BuildJob
+      steps:
+        - task: UseDotNet@2
+          inputs:
+            packageType: 'sdk'
+            version: '8.0.x'
 
-- task: UseDotNet@2
-  displayName: 'Install .NET 8'
-  inputs:
-    version: $(dotNetVersion)
+        - task: DotNetCoreCLI@2
+          displayName: Restore packages
+          inputs:
+            command: 'restore'
+            projects: '**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Restore Packages'
-  inputs:
-    command: 'restore'
-    projects: '**/*.csproj'
+        - task: DotNetCoreCLI@2
+          displayName: Build solution
+          inputs:
+            command: 'build'
+            projects: '**/*.csproj'
+            arguments: '--configuration $(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Build Solution'
-  inputs:
-    command: 'build'
-    projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
+        - task: DotNetCoreCLI@2
+          displayName: Publish
+          inputs:
+            command: 'publish'
+            publishWebProjects: true
+            arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+            zipAfterPublish: true
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish Web App'
-  inputs:
-    command: 'publish'
-    publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        - task: PublishBuildArtifacts@1
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)'
+            artifactName: 'drop'
 
-- task: PublishPipelineArtifact@1
-  displayName: 'Publish Artifact'
-  inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)'
-    artifact: 'webapp'
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+    - deployment: DeployToLocal
+      environment: 'LocalMachineEnv'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - download: current
+                artifact: drop
+
+              - task: PowerShell@2
+                displayName: Run published app
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    Write-Host "Launching the application..."
+                    dotnet "$(Pipeline.Workspace)/drop/YourApp.dll"
