@@ -1,12 +1,10 @@
 name: $(Build.BuildId)
 
-# Trigger when CI pipeline completes
 resources:
   pipelines:
-    - pipeline: MVC-Movie-CI  # 👈 This must match your CI pipeline name exactly
-      source: 'MVC-Movie-CI'   # Your CI pipeline name in quotes
+    - pipeline: mvc_movie_ci  # Internal reference (can be any name)
+      source: 'KunjPatel116.mvc-agile-process'  # MUST match exact pipeline name
       trigger: 
-        enabled: true
         branches:
           include:
             - main  # Trigger when CI completes on main branch
@@ -17,23 +15,21 @@ stages:
     jobs:
       - deployment: DeployToIIS
         displayName: 'Deploy to IIS'
-        environment: 'Production'  # Must match your environment name
+        environment: 'Production'
         strategy:
           runOnce:
             deploy:
               steps:
-                - checkout: none  # No code needed, we use artifacts
+                - checkout: none
                 
-                # Download build artifacts from CI pipeline
                 - download: current
-                  artifact: 'webapp'
+                  artifact: drop  # Default artifact name
                 
-                # Deploy to IIS
                 - task: IISWebAppDeploymentOnMachineGroup@0
                   displayName: 'Deploy MVC Application'
                   inputs:
                     WebSiteName: 'Default Web Site'
                     VirtualApplication: 'MVCAgileApp'
-                    Package: '$(Pipeline.Workspace)/webapp/**/*.zip'
+                    Package: '$(Pipeline.Workspace)/drop/**/*.zip'
                     TakeAppOfflineFlag: true
                     RemoveAdditionalFilesFlag: true
